@@ -241,7 +241,7 @@ void detonator_start()
 {
   if (currentState != STATE_SAFE)
   {
-    Serial.print("You cannot start at the moment, you must be in STATE_SAFE state");
+    Serial.print("You cannot start at the moment, you must be in STATE_SAFE state\n");
     return;
   }
 
@@ -253,7 +253,7 @@ void detonator_stop()
 {
   if (currentState != STATE_ARMING && currentState != STATE_ARM)
   {
-    Serial.print("You cannot stop at the moment, you must be in STATE_ARMING or STATE_ARM state");
+    Serial.print("You cannot stop at the moment, you must be in STATE_ARMING or STATE_ARM state\n");
     return;
   }
 
@@ -265,7 +265,7 @@ void detonator_fire()
 {
   if (currentState != STATE_ARM)
   {
-    Serial.print("You cannot fire at the moment, you must be in STATE_ARM state");
+    Serial.print("You cannot fire at the moment, you must be in STATE_ARM state\n");
     return;
   }
 
@@ -274,6 +274,6 @@ void detonator_fire()
 
 void detonator_failsafe(const String &message)
 {
-  Serial.println("ERROR: " + message);
+  Serial.println("ERROR: " + message + "\n");
   detonator_set_state(STATE_SAFE);
 }
