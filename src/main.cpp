@@ -6,6 +6,7 @@
 #define FIRELED 27
 #define BUZZER 26
 #define BUTTON 32
+#define PWM_IN 34
 
 #define ARMING 10000
 #define ARMTIMEOUT 40000 // 10 sec for STATE_ARMING & 30 sec for STATE_ARM
@@ -47,6 +48,7 @@ void setup()
   pinMode(FIRELED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);
+  pinMode(PWM_IN, INPUT);
 
   browser_init();
 }
@@ -55,6 +57,24 @@ void loop()
 {
   detonator_update();
   server.handleClient();
+
+  int pwmValue = pulseIn(PWM_IN, HIGH, 25000);
+
+  if (pwmValue > 0)
+  {
+    if (pwmValue >= 900 && pwmValue <= 1100)
+    {
+      detonator_stop();
+    }
+    else if (pwmValue >= 1900 && pwmValue <= 2100)
+    {
+      detonator_fire();
+    }
+    else
+    {
+      detonator_failsafe("Invalid PWM value: " + String(pwmValue));
+    }
+  }
 
   if (digitalRead(BUTTON) == LOW)
   {
