@@ -127,6 +127,17 @@ String getHtml()
   return R"(
 <!DOCTYPE html>
 <html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { background: #1a1a1a; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
+    h1 { color: #ff4444; }
+    button { padding: 15px 30px; margin: 10px; font-size: 18px; border: none; border-radius: 8px; cursor: pointer; }
+    a:nth-child(1) button { background: #44aa44; }
+    a:nth-child(2) button { background: #aaaaaa; }
+    a:nth-child(3) button { background: #ff4444; }
+  </style>
+</head>
 <body>
   <h1>Detonator Control</h1>
   <a href="/start"><button>Start</button></a>
