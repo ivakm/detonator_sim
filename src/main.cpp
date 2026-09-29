@@ -13,9 +13,6 @@
 
 WebServer server(80);
 
-String getHtml();
-void browser_init();
-
 typedef enum
 {
   STATE_SAFE,
@@ -24,7 +21,10 @@ typedef enum
   STATE_FIRE
 } DetonatorState;
 
-DetonatorState currentState = STATE_SAFE;
+void system_init();
+
+String getHtml();
+void browser_init();
 
 void detonator_update();
 void detonator_set_state(DetonatorState newState);
@@ -32,6 +32,8 @@ void detonator_start();
 void detonator_stop();
 void detonator_fire();
 void detonator_failsafe(const String &message);
+
+DetonatorState currentState = STATE_SAFE;
 
 unsigned long startTime = millis();
 
@@ -50,6 +52,7 @@ void setup()
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(PWM_IN, INPUT);
 
+  system_init();
   browser_init();
 }
 
@@ -80,6 +83,34 @@ void loop()
   {
     detonator_start();
   }
+}
+
+void system_init()
+{
+  uint64_t chipId = ESP.getEfuseMac();
+  if (!chipId)
+  {
+    detonator_failsafe("System init failed: invalid chip ID");
+    return;
+  }
+
+  Serial.printf("Chip ID: %04X%08X\n", (uint32_t)(chipId >> 32), (uint32_t)chipId);
+
+  if (digitalRead(BUTTON) == LOW)
+  {
+    detonator_failsafe("System init failed: button is stuck");
+    return;
+  }
+
+  digitalWrite(ARMLED, HIGH);
+  digitalWrite(FIRELED, HIGH);
+  digitalWrite(BUZZER, HIGH);
+  delay(500);
+  digitalWrite(ARMLED, LOW);
+  digitalWrite(FIRELED, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  Serial.println("System init OK");
 }
 
 String getHtml()
