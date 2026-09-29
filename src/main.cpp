@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <SPIFFS.h>
 
 #define ARMLED 25
 #define FIRELED 27
@@ -13,9 +14,6 @@
 
 WebServer server(80);
 
-String getHtml();
-void browser_init();
-
 typedef enum
 {
   STATE_SAFE,
@@ -24,7 +22,10 @@ typedef enum
   STATE_FIRE
 } DetonatorState;
 
-DetonatorState currentState = STATE_SAFE;
+void system_init();
+
+String getHtml();
+void browser_init();
 
 void detonator_update();
 void detonator_set_state(DetonatorState newState);
@@ -32,6 +33,8 @@ void detonator_start();
 void detonator_stop();
 void detonator_fire();
 void detonator_failsafe(const String &message);
+
+DetonatorState currentState = STATE_SAFE;
 
 unsigned long startTime = millis();
 
@@ -50,6 +53,7 @@ void setup()
   pinMode(BUTTON, INPUT_PULLUP);
   pinMode(PWM_IN, INPUT);
 
+  system_init();
   browser_init();
 }
 
@@ -82,6 +86,42 @@ void loop()
   }
 }
 
+void system_init()
+{
+  uint64_t chipId = ESP.getEfuseMac();
+  if (!chipId)
+  {
+    detonator_failsafe("System init failed: invalid chip ID");
+    return;
+  }
+
+  Serial.printf("Chip ID: %04X%08X\n", (uint32_t)(chipId >> 32), (uint32_t)chipId);
+
+  if (digitalRead(BUTTON) == LOW)
+  {
+    detonator_failsafe("System init failed: button is stuck");
+    return;
+  }
+
+  if (!SPIFFS.begin(true))
+  {
+    detonator_failsafe("System init failed: SPIFFS mount failed");
+    return;
+  }
+
+  Serial.println("SPIFFS OK");
+
+  digitalWrite(ARMLED, HIGH);
+  digitalWrite(FIRELED, HIGH);
+  digitalWrite(BUZZER, HIGH);
+  delay(500);
+  digitalWrite(ARMLED, LOW);
+  digitalWrite(FIRELED, LOW);
+  digitalWrite(BUZZER, LOW);
+
+  Serial.println("System init OK");
+}
+
 String getHtml()
 {
   return R"(
@@ -91,7 +131,7 @@ String getHtml()
   <h1>Detonator Control</h1>
   <a href="/start"><button>Start</button></a>
   <a href="/stop"><button>Stop</button></a>
-  <a href="/fire"><button>Підрив</button></a>
+  <a href="/fire"><button>Fire</button></a>
 </body>
 </html>
 )";
