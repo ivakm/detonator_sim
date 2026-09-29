@@ -130,7 +130,7 @@ void detonator_update()
   case STATE_ARM:
     digitalWrite(ARMLED, LOW);
 
-    if (armBeepCount < 3 && millis() - lastBlink >= 500)
+    if (armBeepCount < 6 && millis() - lastBlink >= 500)
     {
 
       digitalWrite(BUZZER, !digitalRead(BUZZER));
