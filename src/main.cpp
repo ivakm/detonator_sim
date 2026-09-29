@@ -7,6 +7,9 @@
 #define BUZZER 26
 #define BUTTON 32
 
+#define ARMING 10000
+#define ARMTIMEOUT 40000 // 10 sec for STATE_ARMING & 30 sec for STATE_ARM
+
 WebServer server(80);
 
 String getHtml();
@@ -27,6 +30,7 @@ void detonator_set_state(DetonatorState newState);
 void detonator_start();
 void detonator_stop();
 void detonator_fire();
+void detonator_failsafe(const String &message);
 
 unsigned long startTime = millis();
 
@@ -121,7 +125,7 @@ void detonator_update()
       lastBlink = millis();
     }
 
-    if (millis() - startTime >= 10000) // 5 * 60 * 1000
+    if (millis() - startTime >= ARMING)
     {
       detonator_set_state(STATE_ARM);
     }
@@ -139,6 +143,11 @@ void detonator_update()
     }
 
     digitalWrite(FIRELED, HIGH);
+
+    if (millis() - startTime >= ARMTIMEOUT)
+    {
+      detonator_failsafe("STATE_ARM - Timeout");
+    }
 
     break;
 
@@ -161,6 +170,7 @@ void detonator_start()
 {
   if (currentState != STATE_SAFE)
   {
+    Serial.print("You cannot start at the moment, you must be in STATE_SAFE state");
     return;
   }
 
@@ -172,7 +182,7 @@ void detonator_stop()
 {
   if (currentState != STATE_ARMING && currentState != STATE_ARM)
   {
-    // Create Error message, like you cannot fire at the moment, you must be in STATE_ARM state
+    Serial.print("You cannot stop at the moment, you must be in STATE_ARMING or STATE_ARM state");
     return;
   }
 
@@ -184,9 +194,15 @@ void detonator_fire()
 {
   if (currentState != STATE_ARM)
   {
-    // Create Error message, like you cannot fire at the moment, you must be in STATE_ARM state
+    Serial.print("You cannot fire at the moment, you must be in STATE_ARM state");
     return;
   }
 
   detonator_set_state(STATE_FIRE);
+}
+
+void detonator_failsafe(const String &message)
+{
+  Serial.println("ERROR: " + message);
+  detonator_set_state(STATE_SAFE);
 }
